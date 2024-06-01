@@ -15,6 +15,7 @@ local Players = game.Players
 local player = Players.LocalPlayer
 
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local ReplicatedStorage = game.ReplicatedStorage
 local CheckIgneousConfig = ReplicatedStorage.Dependencies:FindFirstChild("IgneousConfig")
@@ -94,3 +95,15 @@ end
 -- Main Framework Setup
 
 IdleAnim:Play()
+
+UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEvent: boolean) 
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		IdleAnim:Stop()
+		ShootAnim:Play()
+		ShootAnim.Stopped:Connect(function()
+			IdleAnim:Play()
+		end)
+	elseif input.KeyCode == Enum.KeyCode.R then
+		ReloadAnim:Play()
+	end
+end)
