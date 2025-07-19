@@ -1,7 +1,0 @@
-{
-  "scriptdata": {
-    "name": "IgneousConfig",
-    "location": "game.ReplicatedStorage.Dependencies",
-    "script": "module"
-  }
-}
