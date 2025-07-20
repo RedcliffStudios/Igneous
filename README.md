@@ -7,6 +7,13 @@
 
 # Setting up Igneous Engine
 
+## Prerequisites
+
+> Igneous Engine requires 2 packages:
+>
+> - [`Spring = "sleitnick/spring@1.0.0"`](https://sleitnick.github.io/RbxUtil/api/Spring/)
+> - [`Trove = "sleitnick/trove@1.5.1"`](https://sleitnick.github.io/RbxUtil/api/Trove/)
+
 ## Adding the main module
 
 > Insert the [main module](Source/Igneous.luau) somewhere the client can access for example in `ReplicatedStorage`
