@@ -19,7 +19,6 @@ local Packages = ReplicatedStorage.Packages
 local Trove = require(Packages.Trove)
 local Spring = require(Packages.Spring)
 
-local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
 
 local Camera = game.Workspace.CurrentCamera
@@ -138,26 +137,8 @@ function IgneousEngine:Fire(Amount)
 		local Origin = Camera.CFrame.Position
 		local Direction = vector.normalize((Camera.CFrame.LookVector + self:GenerateSpread())) * self.Data.Range
 		local Raycast = game.Workspace:Raycast(Origin, Direction, Params)
-
-		if Raycast then
-			local Model = Raycast.Instance:FindFirstAncestorWhichIsA("Model")
-
-			if Model then
-				local Humanoid = Model:FindFirstChild("Humanoid")
-				if Humanoid then
-					if Humanoid.Health > 0 then
-						ReplicatedStorage.Events.Weapon.Hit:FireServer(
-							Model.Humanoid,
-							Raycast.Instance,
-							self.Data
-						)
-					end
-				end
-			end
-		end
 		UpdateModpacks("Fire", { { Origin, Direction }, Raycast, self.Data })
 	end
-
 	task.wait(self.Data.Cooldown)
 	self.CanFire = true
 	return
