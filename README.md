@@ -1,4 +1,4 @@
-<h1 align="center"><img src="Assets/logo/igneous.png" alt="Igneous Engine logo"/></h1>
+<h1 align="center"><img src="Assets/logo/full.png" alt="Igneous Engine logo"/></h1>
 
 <div align="center">
  <h1>Igneous Engine</h1>
