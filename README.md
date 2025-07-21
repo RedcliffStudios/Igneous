@@ -36,9 +36,47 @@ TODO: BulletHoles and Damage modpacks
 
 # Using Igneous Engine
 
-## Methods and functions
+## Functions
 
 TODO: CreateWeapon, Equip, Dequip, SetFiring, SetAim, Reload
+
+# Weapons
+
+## Folder Structure
+
+> Weapons must contain 3 things inside its folder:
+>
+> - A viewmodel
+> - A data module
+> - A function module
+>
+> Here is an example of the structure of a weapon:
+>
+> ```text
+>ReplicatedStorage
+>└── Weapons
+>    └── Glock17
+>        ├── Viewmodel
+>        ├── Data
+>        └── Module
+>```
+>
+> Examples of the modules:
+>
+> - [Data](Source/Templates/Weapon/Data.luau)
+> - [Function](Source/Templates/Weapon/Module.luau)
+
+## Viewmodel Structure
+
+> Viewmodels must contain a primary part and an Animation Controller with an Animator inside (soon Igneous Engine will support humanoid viewmodels)
+> The primary part is what binds to the camera, and should have welds/joints to all parts of the viewmodel.
+> Heres an example of the structure of a viewmodel:
+>
+>```text
+>Viewmodel
+>├── HumanoidRootPart (Primary Part)
+>└── AnimationController
+>    └── Animator
 
 # Creating modpacks
 
@@ -59,7 +97,7 @@ TODO: CreateWeapon, Equip, Dequip, SetFiring, SetAim, Reload
 >
 > Folders and scripts like `Resources`, `Events`, and `Server.server.luau` are optional, only add scripts and items that are needed by the modpack to function properly.
 
-## Functions
+## Methods
 
 > Every modpack requires 2 functions to work properly, even if they are empty, which are:
 >
