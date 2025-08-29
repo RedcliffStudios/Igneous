@@ -230,7 +230,7 @@ end
 function IgneousEngine:PlayAnimation(Name: string)
 	if not self.AnimCache[Name] then
 		self.AnimCache[Name] =
-			self.Viewmodel.AnimationController.Animator:LoadAnimation(self.Viewmodel.Animations[Name])
+			self.Viewmodel:FindFirstChild("Animator", true):LoadAnimation(self.Viewmodel.Animations[Name])
 	end
 
 	self.AnimCache[Name]:Play(0)
