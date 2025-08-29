@@ -12,6 +12,16 @@ local Modpack = {}
 
 function Modpack.Fire(Coordinate: { Origin: vector, Direction: vector }, Raycast: RaycastResult, Data: {})
 	if Raycast then
+		if Raycast then
+			local Model = Raycast.Instance:FindFirstAncestorWhichIsA("Model")
+
+			if Model then
+				if Model:FindFirstChild("Humanoid") then
+					return
+				end
+			end
+		end
+
 		local Hole = Resources.Hole:Clone()
 		Hole.CFrame = CFrame.new(Raycast.Position, Raycast.Position + Raycast.Normal)
 
@@ -28,5 +38,9 @@ function Modpack.Fire(Coordinate: { Origin: vector, Direction: vector }, Raycast
 end
 
 function Modpack.Reload(Data: {}, Animation: AnimationTrack) end
+
+function Modpack.Equip(Weapon) end
+
+function Modpack.Unequip(Weapon) end
 
 return Modpack

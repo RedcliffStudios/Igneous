@@ -22,4 +22,8 @@ end
 
 function Modpack.Reload(_Data: {}, _Animation: AnimationTrack) end
 
+function Modpack.Equip(Weapon) end
+
+function Modpack.Unequip(Weapon) end
+
 return Modpack
