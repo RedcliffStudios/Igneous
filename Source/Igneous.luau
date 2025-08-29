@@ -19,6 +19,7 @@ local Packages = ReplicatedStorage.Packages
 local Trove = require(Packages.Trove)
 local Spring = require(Packages.Spring)
 
+local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
 
 local Camera = game.Workspace.CurrentCamera
@@ -54,6 +55,9 @@ end
 
 function IgneousEngine.CreateWeapon(Name: string)
 	local self = setmetatable({
+		
+		InternalName = Name,
+		
 		Viewmodel = GetWeaponAsset(Name, "Viewmodel"):Clone(),
 		Data = require(GetWeaponAsset(Name, "Data")),
 		Module = require(GetWeaponAsset(Name, "Module")),
@@ -111,11 +115,13 @@ end
 function IgneousEngine:Unequip()
 	self.Viewmodel.Parent = Weapons
 	self.IsFiring = false
+	UpdateModpacks("Unequip", {self})
 end
 
 function IgneousEngine:Equip()
 	self.IsActive = true
 	self.Viewmodel.Parent = game.Workspace
+	UpdateModpacks("Equip", {self})
 end
 
 function IgneousEngine:Fire(Amount)
@@ -137,8 +143,10 @@ function IgneousEngine:Fire(Amount)
 		local Origin = Camera.CFrame.Position
 		local Direction = vector.normalize((Camera.CFrame.LookVector + self:GenerateSpread())) * self.Data.Range
 		local Raycast = game.Workspace:Raycast(Origin, Direction, Params)
+		
 		UpdateModpacks("Fire", { { Origin, Direction }, Raycast, self.Data })
 	end
+
 	task.wait(self.Data.Cooldown)
 	self.CanFire = true
 	return
@@ -171,7 +179,7 @@ function IgneousEngine:SetFiring(Boolean: boolean)
 end
 
 function IgneousEngine:SetAiming(Boolean: boolean)
-	if not self.IsActive then
+	if not self.IsActive and self.Data.CanAim then
 		return
 	end
 
@@ -183,7 +191,11 @@ function IgneousEngine:Reload()
 	if not self.IsActive or self.Data.Ammo == self.Data.MaxAmmo or self.Data.Reserve == 0 then
 		return
 	end
-
+	
+	if self.IsAiming and not self.Data.CanReloadWhileAiming then
+		IgneousEngine:SetAiming(false)
+	end
+	
 	self.IsActive = false
 
 	self.Module:PlayEffect("Reload")

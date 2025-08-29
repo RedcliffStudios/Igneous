@@ -14,6 +14,9 @@ return {
 	BulletAmount = 1,
 	
 	AimSpeed = 1,
+
+	CanReloadWhileAiming = false,
+	CanAim = true,
 	
 	Damage = {
 		Torso = 50,
