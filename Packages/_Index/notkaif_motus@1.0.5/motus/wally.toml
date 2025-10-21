@@ -1,0 +1,11 @@
+[package]
+name = "notkaif/motus"
+description = "Lightweight animation handler wrapper for Roblox animator objects"
+version = "1.0.5"
+license = "MIT"
+authors = ["Kaif"]
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+exclude = ["README.md", ".vscode", "rokit.toml", "docs", "build", "moonwave.toml", "selene.toml"]
+
+[dependencies]

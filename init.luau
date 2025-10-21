@@ -1,0 +1,195 @@
+--!strict
+
+local Player = game.Players.LocalPlayer
+
+local ReplicatedStorage = game.ReplicatedStorage
+local Packages = ReplicatedStorage.Packages
+
+local Trove = require(Packages.Trove)
+local Spring = require(Packages.Spring)
+local Motus = require(Packages.Motus)
+
+local RunService = game:GetService("RunService")
+
+local Params = RaycastParams.new()
+Params.FilterType = Enum.RaycastFilterType.Exclude
+
+local Camera = game.Workspace.CurrentCamera
+
+local function DeepClone(original: DataModule)
+	local clone = table.clone(original)
+
+	for key, value in original do
+		if type(value) == "table" then
+			clone[key] = DeepClone(value)
+		end
+	end
+
+	return clone
+end
+
+local Igneous = {}
+Igneous.__index = Igneous
+
+type DataModule = { any } & { [any]: any }
+
+type Firemode = "Semi" | "Auto" | "Burst"
+
+type AmmoData = {
+	Amount: number,
+	Max: number,
+	Reserve: number,
+}
+
+export type IgneousWeapon = typeof(setmetatable(
+	{} :: {
+		Name: string,
+		Viewmodel: Model,
+
+		Animator: Motus.MotusAnimator,
+
+		Init: (self: Weapon) -> (),
+		Equip: (self: Weapon) -> (),
+		Unequip: (self: Weapon) -> (),
+		SetFiring: (self: Weapon, bool: boolean) -> (),
+	},
+	Igneous
+))
+
+type Weapon = IgneousWeapon & {
+	_Cleanup: Trove.Trove,
+	_IsFiring: boolean,
+	_IsEquipped: boolean,
+	_CanFire: boolean,
+	_Ammo: AmmoData,
+	_Data: DataModule,
+	_Recoil: Spring.Spring<vector>,
+	_GenerateSpread: (self: Weapon) -> vector,
+}
+
+function Igneous.new(name: string, viewmodel: Model): IgneousWeapon
+	local DataModule = viewmodel:FindFirstChild("Data")
+	assert(DataModule, "Weapon: " .. name .. " doesn't have a data module inside it's viewmodel")
+	local Data = require(viewmodel:FindFirstChild("Data")) :: DataModule
+
+	local self = setmetatable({
+		Name = name,
+		Viewmodel = viewmodel:Clone(),
+
+		Animator = Motus.new(viewmodel),
+		_Cleanup = Trove.new(),
+		_Recoil = Spring.new(vector.zero, 0.25, 25),
+
+		_Ammo = {
+			Amount = Data.Ammo,
+			Max = Data.MaxAmmo,
+			Reserve = Data.Reserve,
+		},
+
+		_Data = DeepClone(Data),
+
+		_IsFiring = false,
+		_IsEquipped = false,
+		_CanFire = Data.CanFire,
+
+		Init = Igneous.Init,
+		Equip = Igneous.Equip,
+		Unequip = Igneous.Unequip,
+		SetFiring = Igneous.SetFiring,
+		_GenerateSpread = Igneous._GenerateSpread,
+	}, Igneous)
+
+	self:Init()
+	DataModule:Destroy()
+
+	return self
+end
+
+function Igneous.Init(self: Weapon)
+	self._Cleanup:Add(RunService.PreRender:Connect(function(dt)
+		local Position = self._Recoil:Update(dt)
+		Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(Position.y), math.rad(Position.x), 0)
+		self.Viewmodel:PivotTo(Camera.CFrame)
+	end))
+end
+
+function Igneous.Equip(self: Weapon)
+	self._IsEquipped = true
+	self.Viewmodel.Parent = game.Workspace
+end
+
+function Igneous.Unequip(self: Weapon)
+	self._IsEquipped = false
+	self.Viewmodel.Parent = ReplicatedStorage
+end
+
+function Igneous._GenerateSpread(self: Weapon)
+	local theta = math.random() * 2 * math.pi
+	local r = math.tan(math.rad(self._Data.MaxSpread * (1 - self._Data.Accuracy))) * math.sqrt(math.random())
+
+	local x = r * math.cos(theta)
+	local y = r * math.sin(theta)
+
+	return vector.create(x, y, 0)
+end
+
+function Igneous._Fire(self: Weapon, Amount: number)
+	if not (self._Ammo.Amount > 0) then
+		return
+	end
+
+	self._CanFire = false
+	Params.FilterDescendantsInstances = { Player.Character :: Instance, self.Viewmodel }
+
+	self._Recoil:Impulse(
+		vector.create(
+			math.random(-self._Data.Recoil.Horizontal, self._Data.Recoil.Horizontal),
+			self._Data.Recoil.Vertical,
+			0
+		)
+	)
+
+	self._Ammo.Amount -= 1
+
+	for _ = 1, Amount do
+		local LookVector = Camera.CFrame.LookVector
+		local Origin = Camera.CFrame.Position
+		local Direction = vector.normalize(
+			(vector.create(LookVector.X, LookVector.Y, LookVector.Z) + self:_GenerateSpread())
+		) * self._Data.Range
+		local Raycast = game.Workspace:Raycast(Origin, Direction, Params)
+	end
+
+	task.wait(self._Data.Cooldown)
+	self._CanFire = true
+	return
+end
+
+function Igneous.SetFiring(self: Weapon, boolean: boolean)
+	if not self._IsEquipped or self._IsFiring == boolean then
+		return
+	end
+
+	self._IsFiring = boolean
+	print("Fire")
+
+	self._Cleanup:Add(task.spawn(function()
+		if self._CanFire and self._IsFiring and self._Ammo.Amount > 0 then
+			local Firemode = self._Data.Firemode :: Firemode
+
+			if Firemode == "Semi" then
+				self:_Fire(self._Data.Projectiles :: number)
+			elseif Firemode == "Burst" then
+				for _ = 1, self._Data.Projectiles :: number do
+					self:_Fire(1)
+				end
+			elseif Firemode == "Auto" then
+				while self._IsFiring and self._Ammo.Amount > 0 do
+					self:_Fire(self._Data.Projectiles :: number)
+				end
+			end
+		end
+	end))
+end
+
+return Igneous

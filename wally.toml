@@ -3,7 +3,9 @@ name = "redcliffstudios/igneous"
 version = "0.1.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
+exclude = ["sourcemap.json", "rokit.toml", "default.project.json", ".gitignore", "Assets", ".vscode", "README.md", "selene.toml", "Packages"]
 
 [dependencies]
 Spring = "sleitnick/spring@1.0.0"
 Trove = "sleitnick/trove@1.5.1"
+Motus = "notkaif/motus@1.0.5"
