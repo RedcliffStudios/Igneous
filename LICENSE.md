@@ -1,28 +1,21 @@
-Kaif NM-GC-CM License
-=================
+MIT License
 
-1. **Non-Commercial Use Only**
-   - You may not use the assets or source code for commercial purposes.
+Copyright (c) 2025 Kaif
 
-2. **No Selling**
-   - You may not sell the assets or source code of the game.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-3. **Attribution Required**
-   - You must give appropriate credit when republishing the source code or using the assets in any way.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-4. **No Uncredited Modifications**
-   - You may not modify the assets or source code without providing credit to the original creators.
-
-5. **ShareAlike**
-   - If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
-
-6. **Prohibited Actions**
-   - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
-
-All trademarks belong to Kaif.
-
-For any questions or permissions beyond the scope of this license, please contact the original authors.
-
-NOTE: This license only applies to assets and code created by the author, and does not apply to assets created by other authors.
-
-2025 © Kaif
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
