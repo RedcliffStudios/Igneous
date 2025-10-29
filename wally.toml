@@ -1,6 +1,9 @@
 [package]
-name = "redcliffstudios/igneous"
+name = "notkaif/igneous"
+description = "Lightweight, modular FPS framework for Roblox providing core weapon mechanics with a hook-based modpack system"
 version = "0.1.0"
+license = "MIT"
+authors = ["Kaif"]
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 exclude = ["sourcemap.json", "rokit.toml", "default.project.json", ".gitignore", "Assets", ".vscode", "README.md", "selene.toml", "Packages"]
@@ -8,4 +11,4 @@ exclude = ["sourcemap.json", "rokit.toml", "default.project.json", ".gitignore",
 [dependencies]
 Spring = "sleitnick/spring@1.0.0"
 Trove = "sleitnick/trove@1.5.1"
-Motus = "notkaif/motus@1.0.5"
+Motus = "notkaif/motus@1.1.0"

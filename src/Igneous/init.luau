@@ -9,14 +9,32 @@ local Trove = require(Packages.Trove)
 local Spring = require(Packages.Spring)
 local Motus = require(Packages.Motus)
 
+local ModpackManager = require(script.ModpackManager)
+local Types = require(script.Types)
+
+type Weapon = IgneousWeapon & {
+	_Cleanup: Trove.Trove,
+	_IsFiring: boolean,
+	_IsEquipped: boolean,
+	_CanFire: boolean,
+	_Ammo: Types.AmmoData,
+	_Data: Types.DataModule,
+	_Recoil: Spring.Spring<vector>,
+
+	_Init: (self: Weapon) -> (),
+	_GenerateSpread: (self: Weapon) -> vector,
+}
+
+local Modpacks = ReplicatedStorage:FindFirstChild("Modpacks")
+
 local RunService = game:GetService("RunService")
 
-local Params = RaycastParams.new()
-Params.FilterType = Enum.RaycastFilterType.Exclude
+local RaycastParams = RaycastParams.new()
+RaycastParams.FilterType = Enum.RaycastFilterType.Exclude
 
 local Camera = game.Workspace.CurrentCamera
 
-local function DeepClone(original: DataModule)
+local function DeepClone(original: Types.DataModule)
 	local clone = table.clone(original)
 
 	for key, value in original do
@@ -28,49 +46,22 @@ local function DeepClone(original: DataModule)
 	return clone
 end
 
+if Modpacks then
+	for _, modpack in ipairs(Modpacks:GetChildren()) do
+		ModpackManager:RegisterModpack(modpack :: ModuleScript)
+	end
+end
+
+--- @class Igneous
+--- Lightweight, modular FPS framework for Roblox providing core weapon mechanics with a hook-based modpack system
+
 local Igneous = {}
 Igneous.__index = Igneous
-
-type DataModule = { any } & { [any]: any }
-
-type Firemode = "Semi" | "Auto" | "Burst"
-
-type AmmoData = {
-	Amount: number,
-	Max: number,
-	Reserve: number,
-}
-
-export type IgneousWeapon = typeof(setmetatable(
-	{} :: {
-		Name: string,
-		Viewmodel: Model,
-
-		Animator: Motus.MotusAnimator,
-
-		Init: (self: Weapon) -> (),
-		Equip: (self: Weapon) -> (),
-		Unequip: (self: Weapon) -> (),
-		SetFiring: (self: Weapon, bool: boolean) -> (),
-	},
-	Igneous
-))
-
-type Weapon = IgneousWeapon & {
-	_Cleanup: Trove.Trove,
-	_IsFiring: boolean,
-	_IsEquipped: boolean,
-	_CanFire: boolean,
-	_Ammo: AmmoData,
-	_Data: DataModule,
-	_Recoil: Spring.Spring<vector>,
-	_GenerateSpread: (self: Weapon) -> vector,
-}
 
 function Igneous.new(name: string, viewmodel: Model): IgneousWeapon
 	local DataModule = viewmodel:FindFirstChild("Data")
 	assert(DataModule, "Weapon: " .. name .. " doesn't have a data module inside it's viewmodel")
-	local Data = require(viewmodel:FindFirstChild("Data")) :: DataModule
+	local Data = require(viewmodel:FindFirstChild("Data")) :: Types.DataModule
 
 	local self = setmetatable({
 		Name = name,
@@ -91,34 +82,32 @@ function Igneous.new(name: string, viewmodel: Model): IgneousWeapon
 		_IsFiring = false,
 		_IsEquipped = false,
 		_CanFire = Data.CanFire,
+	}, Igneous) :: Weapon
 
-		Init = Igneous.Init,
-		Equip = Igneous.Equip,
-		Unequip = Igneous.Unequip,
-		SetFiring = Igneous.SetFiring,
-		_GenerateSpread = Igneous._GenerateSpread,
-	}, Igneous)
-
-	self:Init()
+	self:_Init()
 	DataModule:Destroy()
 
 	return self
 end
 
-function Igneous.Init(self: Weapon)
+function Igneous._Init(self: Weapon)
 	self._Cleanup:Add(RunService.PreRender:Connect(function(dt)
 		local Position = self._Recoil:Update(dt)
 		Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(Position.y), math.rad(Position.x), 0)
 		self.Viewmodel:PivotTo(Camera.CFrame)
 	end))
+	
+	RaycastParams.FilterDescendantsInstances = { Player.Character :: Instance, self.Viewmodel }
 end
 
 function Igneous.Equip(self: Weapon)
+	ModpackManager:TriggerHook("OnEquip", self)
 	self._IsEquipped = true
 	self.Viewmodel.Parent = game.Workspace
 end
 
 function Igneous.Unequip(self: Weapon)
+	ModpackManager:TriggerHook("OnUnequip", self)
 	self._IsEquipped = false
 	self.Viewmodel.Parent = ReplicatedStorage
 end
@@ -139,7 +128,6 @@ function Igneous._Fire(self: Weapon, Amount: number)
 	end
 
 	self._CanFire = false
-	Params.FilterDescendantsInstances = { Player.Character :: Instance, self.Viewmodel }
 
 	self._Recoil:Impulse(
 		vector.create(
@@ -157,7 +145,8 @@ function Igneous._Fire(self: Weapon, Amount: number)
 		local Direction = vector.normalize(
 			(vector.create(LookVector.X, LookVector.Y, LookVector.Z) + self:_GenerateSpread())
 		) * self._Data.Range
-		local Raycast = game.Workspace:Raycast(Origin, Direction, Params)
+		local RaycastResult = game.Workspace:Raycast(Origin, Direction, RaycastParams)
+		ModpackManager:TriggerHook("OnFire", { position = Origin, direction = Direction }, RaycastResult)
 	end
 
 	task.wait(self._Data.Cooldown)
@@ -171,11 +160,16 @@ function Igneous.SetFiring(self: Weapon, boolean: boolean)
 	end
 
 	self._IsFiring = boolean
-	print("Fire")
+
+	if self._IsFiring then
+		ModpackManager:TriggerHook("OnFireStart", self)
+	else
+		ModpackManager:TriggerHook("OnFireEnd", self)
+	end
 
 	self._Cleanup:Add(task.spawn(function()
 		if self._CanFire and self._IsFiring and self._Ammo.Amount > 0 then
-			local Firemode = self._Data.Firemode :: Firemode
+			local Firemode = self._Data.Firemode :: Types.Firemode
 
 			if Firemode == "Semi" then
 				self:_Fire(self._Data.Projectiles :: number)
@@ -191,5 +185,19 @@ function Igneous.SetFiring(self: Weapon, boolean: boolean)
 		end
 	end))
 end
+
+export type IgneousWeapon = typeof(setmetatable(
+	{} :: {
+		Name: string,
+		Viewmodel: Model,
+
+		Animator: Motus.MotusAnimator,
+
+		Equip: (self: Weapon) -> (),
+		Unequip: (self: Weapon) -> (),
+		SetFiring: (self: Weapon, bool: boolean) -> (),
+	},
+	Igneous
+))
 
 return Igneous
