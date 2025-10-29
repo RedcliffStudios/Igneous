@@ -3,14 +3,14 @@
 registry = "test"
 
 [[package]]
-name = "notkaif/motus"
-version = "1.0.5"
-dependencies = []
+name = "notkaif/igneous"
+version = "0.1.0"
+dependencies = [["Motus", "notkaif/motus@1.1.0"], ["Spring", "sleitnick/spring@1.0.0"], ["Trove", "sleitnick/trove@1.5.1"]]
 
 [[package]]
-name = "redcliffstudios/igneous"
-version = "0.1.0"
-dependencies = [["Motus", "notkaif/motus@1.0.5"], ["Spring", "sleitnick/spring@1.0.0"], ["Trove", "sleitnick/trove@1.5.1"]]
+name = "notkaif/motus"
+version = "1.1.0"
+dependencies = []
 
 [[package]]
 name = "sleitnick/spring"
