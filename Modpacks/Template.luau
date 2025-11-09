@@ -1,4 +1,7 @@
-local Motus = require(game.ReplicatedStorage.Packages.Motus) -- Remove this if you do not need to animate the viewmodel
+-- References to "Motus" can be removed if you don't animate the viewmodel
+-- Or if you don't need the autocomplete (Not recommended)
+
+local Motus = require(game.ReplicatedStorage.Packages.Motus)
 
 local Modpack = {}
 
@@ -6,7 +9,7 @@ type Weapon = {
 	Name: string,
 	Viewmodel: Model,
 
-	Animator: Motus.MotusAnimator, -- Remove this if you do not need to animate the viewmodel
+	Animator: Motus.MotusAnimator,
 }
 
 function Modpack.OnEquip(weapon: Weapon)

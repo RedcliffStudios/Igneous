@@ -2,12 +2,9 @@
 
 local Player = game.Players.LocalPlayer
 
-local ReplicatedStorage = game.ReplicatedStorage
-local Packages = ReplicatedStorage.Packages
-
-local Trove = require(Packages.Trove)
-local Spring = require(Packages.Spring)
-local Motus = require(Packages.Motus)
+local Trove = require(script.Parent.Trove)
+local Spring = require(script.Parent.Spring)
+local Motus = require(script.Parent.Motus)
 
 local ModpackManager = require(script.ModpackManager)
 local Types = require(script.Types)
@@ -25,7 +22,7 @@ type Weapon = IgneousWeapon & {
 	_GenerateSpread: (self: Weapon) -> vector,
 }
 
-local Modpacks = ReplicatedStorage:FindFirstChild("Modpacks")
+local Modpacks = game.ReplicatedStorage:FindFirstChild("Modpacks")
 
 local RunService = game:GetService("RunService")
 
@@ -58,6 +55,16 @@ end
 local Igneous = {}
 Igneous.__index = Igneous
 
+--[=[
+	@function new
+	@within Igneous
+	@param name string
+	@param viewmodel Model -- Refer to the templates page to see an example viewmodel
+	@return IgneousWeapon
+
+	Creates a new weapon
+]=]
+
 function Igneous.new(name: string, viewmodel: Model): IgneousWeapon
 	local DataModule = viewmodel:FindFirstChild("Data")
 	assert(DataModule, "Weapon: " .. name .. " doesn't have a data module inside it's viewmodel")
@@ -82,13 +89,47 @@ function Igneous.new(name: string, viewmodel: Model): IgneousWeapon
 		_IsFiring = false,
 		_IsEquipped = false,
 		_CanFire = Data.CanFire,
-	}, Igneous) :: Weapon
+	}, Igneous) :: IgneousWeapon
 
-	self:_Init()
+	self._Init(self :: Weapon)
 	DataModule:Destroy()
 
 	return self
 end
+
+--[=[
+	@prop Name string
+	@within IgneousWeapon
+	The name of the weapon
+]=]
+
+--[=[
+	@prop Viewmodel Model
+	@within IgneousWeapon
+	The cloned viewmodel instance for this weapon
+]=]
+
+--[=[
+	@prop Animator MotusAnimator
+	@within IgneousWeapon
+	The Motus animator for controlling weapon animations. See [the specific documentation](https://redcliffstudios.github.io/Motus/api/MotusAnimator) for usage.
+]=]
+
+--[=[
+	@private
+	@method _Init
+	@within IgneousWeapon
+
+	Sets up and initializes the weapon by binding it to the camera and setting the RaycastParams
+]=]
+
+--[=[
+	@method Equip
+	@within IgneousWeapon
+	
+	Equips the weapon, making it visible and triggering the OnEquip hook for all registered modpacks.
+	The viewmodel is parented to Workspace and becomes active.
+]=]
 
 function Igneous._Init(self: Weapon)
 	self._Cleanup:Add(RunService.PreRender:Connect(function(dt)
@@ -96,7 +137,7 @@ function Igneous._Init(self: Weapon)
 		Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(Position.y), math.rad(Position.x), 0)
 		self.Viewmodel:PivotTo(Camera.CFrame)
 	end))
-	
+
 	RaycastParams.FilterDescendantsInstances = { Player.Character :: Instance, self.Viewmodel }
 end
 
@@ -106,11 +147,28 @@ function Igneous.Equip(self: Weapon)
 	self.Viewmodel.Parent = game.Workspace
 end
 
+--[=[
+	@method Unequip
+	@within IgneousWeapon
+	
+	Unequips the weapon, hiding it and triggering the OnUnequip hook for all registered modpacks.
+	The viewmodel is parented back to ReplicatedStorage and becomes inactive.
+]=]
+
 function Igneous.Unequip(self: Weapon)
 	ModpackManager:TriggerHook("OnUnequip", self)
 	self._IsEquipped = false
 	self.Viewmodel.Parent = ReplicatedStorage
 end
+
+--[=[
+	@private
+	@method _GenerateSpread
+	@within IgneousWeapon
+	@return vector
+
+	Generates a random spread based on the weapon's accuracy
+]=]
 
 function Igneous._GenerateSpread(self: Weapon)
 	local theta = math.random() * 2 * math.pi
@@ -121,6 +179,14 @@ function Igneous._GenerateSpread(self: Weapon)
 
 	return vector.create(x, y, 0)
 end
+
+--[=[
+	@private
+	@method _Fire
+	@within IgneousWeapon
+
+	Fires a raycast, and triggers the OnFire hook. It waits the duration of the weapon cooldown.
+]=]
 
 function Igneous._Fire(self: Weapon, Amount: number)
 	if not (self._Ammo.Amount > 0) then
@@ -154,6 +220,16 @@ function Igneous._Fire(self: Weapon, Amount: number)
 	return
 end
 
+--[=[
+	@method SetFiring
+	@within IgneousWeapon
+	@param firing boolean -- Whether the weapon should start or stop firing
+	
+	Controls the weapon's firing state. When set to true, begins firing based on the weapon's firemode (Semi, Burst, or Auto).
+	When set to false, stops firing. Triggers OnFireStart and OnFireEnd hooks accordingly.
+	Only works when the weapon is equipped and has ammunition.
+]=]
+
 function Igneous.SetFiring(self: Weapon, boolean: boolean)
 	if not self._IsEquipped or self._IsFiring == boolean then
 		return
@@ -185,6 +261,13 @@ function Igneous.SetFiring(self: Weapon, boolean: boolean)
 		end
 	end))
 end
+
+--[=[
+	@class IgneousWeapon
+
+	Represents a weapon instance created by `Igneous.new()`. Contains methods for equipping, unequipping, and controlling weapon firing.
+	Weapons automatically handle recoil, spread, ammo management, and trigger modpack hooks at appropriate lifecycle points.
+]=]
 
 export type IgneousWeapon = typeof(setmetatable(
 	{} :: {

@@ -1,0 +1,51 @@
+title = "Igneous"
+tagline = "Lightweight, modular FPS framework for Roblox providing core weapon mechanics with a hook-based modpack system"
+gitRepoUrl = "https://github.com/RedcliffStudios/Igneous"
+gitSourceBranch = "master"
+changelog = false
+
+[[classOrder]]
+section = "Classes"
+classes = ["Igneous", "IgneousWeapon", "Modpack"]
+collapsed = false
+
+[docusaurus]
+onBrokenLinks = "throw"
+onBrokenMarkdownLinks = "warn"
+favicon = "/short.png"
+
+[footer]
+style = "dark"
+copyright = "© 2025 Redcliff Studios. Built with Moonwave and Docusaurus."
+
+[navbar]
+title = ""
+
+[[navbar.items]]
+href = "/docs/Templates"
+label = "Templates"
+
+[navbar.logo]
+alt = "Igneous"
+src = "/full.png"
+
+[[navbar.items]]
+href = "https://discord.gg/uJWveb8JwW"
+label = "Discord"
+position = "right"
+
+[home]
+enabled = true
+includeReadme = false
+
+[[home.features]]
+title = "Hook-Based Modpack System"
+description = "Extend weapon functionality without modifying core code through OnEquip, OnFire, OnAmmoChange, and other lifecycle hooks."
+
+[[home.features]]
+title = "Built-in Weapon Mechanics"
+description = "Includes firing modes (semi, auto, burst), recoil system with spring physics, spread/accuracy calculations, and ammo management out of the box."
+
+[[home.features]]
+title = "Lightweight and Modular"
+description = "Core framework handles essentials while modpacks add features like visual effects, sounds, and animations keeping your weapons customizable and maintainable."
