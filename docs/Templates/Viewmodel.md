@@ -45,7 +45,17 @@ return {
 	CanReloadWhileAiming = false,
 	CanAim = true,
 
-	-- OPTIONAL (You can add any sort of data that might fit your needs)
+	-- OPTIONAL but has hardcoded support
+
+	Lock = {
+		X = true, -- Viewmodel doesn't rotate on the X axis
+		Y = false,
+		Z = false
+	},
+
+	Offset = vector.create(0, 0, 0) -- Camera offset
+
+	-- OPTIONAL but not hardcoded (You can add any sort of data that might fit your needs)
 
 	DisplayName = "Name",
 
