@@ -2,6 +2,8 @@
 
 local Player = game.Players.LocalPlayer
 
+local ReplicatedStorage = game.ReplicatedStorage :: ReplicatedStorage
+
 local Trove = require(script.Parent.Trove)
 local Spring = require(script.Parent.Spring)
 local Motus = require(script.Parent.Motus)
@@ -17,12 +19,13 @@ type Weapon = IgneousWeapon & {
 	_Ammo: Types.AmmoData,
 	_Data: Types.DataModule,
 	_Recoil: Spring.Spring<vector>,
+	_LockedAngles: Vector3,
 
 	_Init: (self: Weapon) -> (),
 	_GenerateSpread: (self: Weapon) -> vector,
 }
 
-local Modpacks = game.ReplicatedStorage:FindFirstChild("Modpacks")
+local Modpacks = ReplicatedStorage:FindFirstChild("Modpacks", true)
 
 local RunService = game:GetService("RunService")
 
@@ -89,6 +92,7 @@ function Igneous.new(name: string, viewmodel: Model): IgneousWeapon
 		_IsFiring = false,
 		_IsEquipped = false,
 		_CanFire = Data.CanFire,
+		_LockedAngles = Vector3.new(0, 0, 0),
 	}, Igneous) :: IgneousWeapon
 
 	self._Init(self :: Weapon)
@@ -135,13 +139,36 @@ function Igneous._Init(self: Weapon)
 	self._Cleanup:Add(RunService.PreRender:Connect(function(dt)
 		local Position = self._Recoil:Update(dt)
 		Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(Position.y), math.rad(Position.x), 0)
-		self.Viewmodel:PivotTo(Camera.CFrame)
+
+		local FinalCFrame = Camera.CFrame
+		if self._Data.Lock then
+			local X, Y, Z = Camera.CFrame:ToOrientation()
+			local Lock = self._Data.Lock
+			FinalCFrame = CFrame.new(Camera.CFrame.Position)
+				* CFrame.fromOrientation(
+					Lock.X and self._LockedAngles.X or X,
+					Lock.Y and self._LockedAngles.Y or Y,
+					Lock.Z and self._LockedAngles.Z or Z
+				)
+		end
+
+		if self._Data.Offset then
+			FinalCFrame = FinalCFrame * CFrame.new(self._Data.Offset)
+		end
+
+		self.Viewmodel:PivotTo(FinalCFrame)
 	end))
 
 	RaycastParams.FilterDescendantsInstances = { Player.Character :: Instance, self.Viewmodel }
 end
 
 function Igneous.Equip(self: Weapon)
+	if self._Data.Lock then
+		local X, Y, Z = Camera.CFrame:ToOrientation()
+		local Lock = self._Data.Lock
+		self._LockedAngles = Vector3.new(Lock.X and X or 0, Lock.Y and Y or 0, Lock.Z and Z or 0)
+	end
+
 	ModpackManager:TriggerHook("OnEquip", self)
 	self._IsEquipped = true
 	self.Viewmodel.Parent = game.Workspace
