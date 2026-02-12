@@ -239,7 +239,7 @@ function Igneous._Fire(self: Weapon, Amount: number)
 			(vector.create(LookVector.X, LookVector.Y, LookVector.Z) + self:_GenerateSpread())
 		) * self._Data.Range
 		local RaycastResult = game.Workspace:Raycast(Origin, Direction, RaycastParams)
-		ModpackManager:TriggerHook("OnFire", { position = Origin, direction = Direction }, RaycastResult)
+		ModpackManager:TriggerHook("OnFire", self, { position = Origin, direction = Direction }, RaycastResult)
 	end
 
 	task.wait(self._Data.Cooldown)
