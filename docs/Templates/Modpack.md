@@ -52,7 +52,7 @@ function Modpack.OnFire(weapon: Weapon, origin: { position: vector, direction: v
 end
 
 function Modpack.OnAmmoChange(weapon: Weapon, previous: number, current: number, reason: "reload" | "fired" | "set")
-	print(weapon.Name, "has changed from", previous("bullets to"), current, "because a", reason, "happened")
+	print(weapon.Name, "has changed from", previous, "bullets to",  current, "because a", reason, "happened")
 end
 
 return Modpack

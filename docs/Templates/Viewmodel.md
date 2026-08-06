@@ -18,6 +18,7 @@ Here is an example of a data module:
 
 ```lua
 -- Viewmodel/Data.luau
+return function()
 return {
 
 	-- REQUIRED
@@ -66,6 +67,7 @@ return {
 		Armor = 30
 	},
 }
+end
 ```
 
 Note: Reloading, ammo manipulation and aiming are features that are not currently implemented. It will be added in the future.
