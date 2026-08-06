@@ -159,7 +159,7 @@ function Igneous._Init(self: Weapon)
 		if self._Runtime.Lock then
 			local X, Y, Z = Camera.CFrame:ToOrientation()
 			local Lock = self._Runtime.Lock
-			FinalCFrame = CFrame.new(Camera.CFrame.Position)
+			FinalCFrame = CFrame.new(FinalCFrame.Position)
 				* CFrame.fromOrientation(
 					Lock.X and self._LockedAngles.X or X,
 					Lock.Y and self._LockedAngles.Y or Y,
@@ -217,11 +217,11 @@ end
 ]=]
 
 function Igneous._GenerateSpread(self: Weapon)
-	local THETA = math.random() * 2 * math.pi
-	local R = math.tan(math.rad(self._Data.MaxSpread * (1 - self._Data.Accuracy))) * math.sqrt(math.random())
+	local Theta = math.random() * 2 * math.pi
+	local Radius = math.tan(math.rad(self._Data.MaxSpread * (1 - self._Data.Accuracy))) * math.sqrt(math.random())
 
-	local X = R * math.cos(THETA)
-	local Y = R * math.sin(THETA)
+	local X = Radius * math.cos(Theta)
+	local Y = Radius * math.sin(Theta)
 
 	return vector.create(X, Y, 0)
 end
@@ -585,11 +585,12 @@ function Igneous.SetFiring(self: Weapon, shouldFire: boolean)
 			self._FireThread = task.spawn(function()
 				if self._CanFire and self._Ammo.Amount > 0 then
 					local Firemode = self._Data.Firemode :: Types.Firemode
+					local Projectiles = self._Data.Projectiles :: number
 
 					if Firemode == "Semi" then
-						self:_Fire(self._Data.Projectiles :: number)
+						self:_Fire(Projectiles)
 					elseif Firemode == "Burst" then
-						for _ = 1, self._Data.Projectiles :: number do
+						for _ = 1, Projectiles do
 							self:_Fire(1)
 						end
 					elseif Firemode == "Auto" then
