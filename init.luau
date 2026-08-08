@@ -33,6 +33,7 @@ type Weapon = IgneousWeapon & {
 	_Init: (self: Weapon) -> (),
 	_GenerateSpread: (self: Weapon) -> vector,
 	_UpdateLockedAngles: (self: Weapon) -> (),
+	_SetLock: (self: Weapon, lock: Types.LockAxes?) -> (),
 
 	_TransferAmmo: (self: Weapon, amount: number) -> (),
 	_RunReload: (self: Weapon) -> (),
@@ -55,6 +56,7 @@ local RUNTIME_KEYS = {
 	Range = true,
 	Cooldown = true,
 	Recoil = true,
+	Offset = true,
 }
 
 if Modpacks then
@@ -137,10 +139,9 @@ function Igneous.new(name: string, viewmodel: Model, data: ModuleScript): Igneou
 		_ReloadStageIndex = nil,
 		_ReloadFireLocked = false,
 		_ReloadThread = nil,
-	}, Igneous) :: IgneousWeapon
+	}, Igneous)
 
-	self._RaycastParams.FilterType = Enum.RaycastFilterType.Exclude
-	self._Init(self :: Weapon)
+	self:_Init()
 
 	return self
 end
@@ -153,7 +154,7 @@ end
 	Sets up and initializes the weapon by binding it to the camera and setting the RaycastParams
 ]=]
 
-function Igneous._Init(self: Weapon)
+function Igneous._Init(self: Weapon): ()
 	self._Cleanup:Add(function()
 		if self._FireThread then
 			task.cancel(self._FireThread)
@@ -186,6 +187,7 @@ function Igneous._Init(self: Weapon)
 		self.Viewmodel:PivotTo(FinalCFrame)
 	end))
 
+	self._RaycastParams.FilterType = Enum.RaycastFilterType.Exclude
 	self._RaycastParams.FilterDescendantsInstances = { Player.Character :: Instance, self.Viewmodel }
 end
 
@@ -197,7 +199,7 @@ end
 	The viewmodel is parented to Workspace and becomes active.
 ]=]
 
-function Igneous.Equip(self: Weapon)
+function Igneous.Equip(self: Weapon): ()
 	self:_UpdateLockedAngles()
 
 	ModpackManager:TriggerHook("OnEquip", self)
@@ -213,7 +215,7 @@ end
 	The viewmodel is parented back to ReplicatedStorage and becomes inactive.
 ]=]
 
-function Igneous.Unequip(self: Weapon)
+function Igneous.Unequip(self: Weapon): ()
 	ModpackManager:TriggerHook("OnUnequip", self)
 	self._IsEquipped = false
 	self.Viewmodel.Parent = ReplicatedStorage
@@ -228,14 +230,11 @@ end
 	Generates a random spread based on the weapon's accuracy
 ]=]
 
-function Igneous._GenerateSpread(self: Weapon)
+function Igneous._GenerateSpread(self: Weapon): vector
 	local Theta = math.random() * 2 * math.pi
 	local Radius = math.tan(math.rad(self._Runtime.MaxSpread * (1 - self._Runtime.Accuracy))) * math.sqrt(math.random())
 
-	local X = Radius * math.cos(Theta)
-	local Y = Radius * math.sin(Theta)
-
-	return vector.create(X, Y, 0)
+	return vector.create(Radius * math.cos(Theta), Radius * math.sin(Theta), 0)
 end
 
 --[=[
@@ -247,7 +246,7 @@ end
 	based on which axes _Runtime.Lock has enabled. No-ops if the weapon isn't locked on any axis.
 ]=]
 
-function Igneous._UpdateLockedAngles(self: Weapon)
+function Igneous._UpdateLockedAngles(self: Weapon): ()
 	local Lock = self._Runtime.Lock
 	if not Lock then
 		return
@@ -267,7 +266,7 @@ end
 	available and to the weapon's Max. Triggers OnAmmoChange if any rounds were transferred.
 ]=]
 
-function Igneous._TransferAmmo(self: Weapon, amount: number)
+function Igneous._TransferAmmo(self: Weapon, amount: number): ()
 	local Transferred = math.min(amount, self._Ammo.Reserve, self._Ammo.Max - self._Ammo.Amount)
 	if Transferred <= 0 then
 		return
@@ -288,7 +287,7 @@ end
 	Runs a Simple reload: waits the full duration, then fills ammo to Max in one transfer.
 ]=]
 
-function Igneous._RunSimpleReload(self: Weapon, reload: Types.SimpleReloadData)
+function Igneous._RunSimpleReload(self: Weapon, reload: Types.SimpleReloadData): ()
 	local Stage: Types.StagedReloadStage =
 		{ Name = "Reload", Duration = reload.Duration, Cancellable = reload.Cancellable, CanFireAfter = true }
 	self._ReloadFireLocked = true
@@ -312,7 +311,7 @@ end
 	unlocks firing according to each stage's AmmoTransfer and CanFireAfter.
 ]=]
 
-function Igneous._RunStagedReload(self: Weapon, reload: Types.StagedReloadData)
+function Igneous._RunStagedReload(self: Weapon, reload: Types.StagedReloadData): ()
 	self._ReloadStageIndex = self._ReloadStageIndex or 1
 
 	while self._ReloadStageIndex <= #reload.Stages do
@@ -343,7 +342,7 @@ end
 	between cycles.
 ]=]
 
-function Igneous._RunProgressiveReload(self: Weapon, reload: Types.ProgressiveReloadData)
+function Igneous._RunProgressiveReload(self: Weapon, reload: Types.ProgressiveReloadData): ()
 	local Stage: Types.StagedReloadStage =
 		{ Name = "Cycle", Duration = reload.Duration, Cancellable = reload.Cancellable, CanFireAfter = true }
 
@@ -368,7 +367,7 @@ end
 	all reload state once the runner finishes.
 ]=]
 
-function Igneous._RunReload(self: Weapon)
+function Igneous._RunReload(self: Weapon): ()
 	local Reload = self._Data.Reload :: Types.ReloadData
 
 	if Reload.Type == "Simple" then
@@ -395,7 +394,7 @@ end
 	Waits the duration of the weapon cooldown before returning.
 ]=]
 
-function Igneous._Fire(self: Weapon, amount: number)
+function Igneous._Fire(self: Weapon, amount: number): ()
 	if self._Ammo.Amount <= 0 or self._ReloadFireLocked then
 		return
 	end
@@ -426,19 +425,20 @@ function Igneous._Fire(self: Weapon, amount: number)
 
 	task.wait(self._Runtime.Cooldown)
 	self._CanFire = true
-	return
 end
 
 --[=[
-	@method SetLock
+	@private
+	@method _SetLock
 	@within IgneousWeapon
 	@param lock LockAxes? -- Which axes to freeze relative to the camera, or nil to unlock
 
 	Freezes the viewmodel's rotation on the given axes, capturing the current camera
 	orientation as the locked angle. Pass nil to let the viewmodel rotate freely again.
+	Called internally by SetRuntime — use `weapon:SetRuntime({ Lock = ... })` instead of calling this directly.
 ]=]
 
-function Igneous._SetLock(self: Weapon, lock: Types.LockAxes?)
+function Igneous._SetLock(self: Weapon, lock: Types.LockAxes?): ()
 	self._Runtime.Lock = lock
 	self:_UpdateLockedAngles()
 end
@@ -453,7 +453,7 @@ end
 	from that stage.
 ]=]
 
-function Igneous.Reload(self: Weapon)
+function Igneous.Reload(self: Weapon): ()
 	if not self._IsEquipped or self._ReloadState == "InProgress" then
 		return
 	end
@@ -486,7 +486,7 @@ end
 	interrupted stage rather than starting over from the beginning.
 ]=]
 
-function Igneous.CancelReload(self: Weapon)
+function Igneous.CancelReload(self: Weapon): ()
 	if self._ReloadState ~= "InProgress" then
 		return
 	end
@@ -531,7 +531,7 @@ end
 	and Lock are runtime-mutable and are written to _Runtime
 ]=]
 
-function Igneous.SetRuntime(self: Weapon, changes: { [string]: any })
+function Igneous.SetRuntime(self: Weapon, changes: { [string]: any }): ()
 	local NewData: Types.DataModule?
 
 	for Key, Value in changes do
@@ -560,8 +560,7 @@ end
 
 	Returns a shallow copy of the weapon's current runtime state (Lock, Offset,
 	IsAiming, Accuracy, MaxSpread, Range, Cooldown, Recoil). A copy, not the live
-	table, so mutating the result can't bypass SetRuntime/SetLock/SetAiming and
-	their side effects.
+	table, so mutating the result can't bypass SetRuntime/SetAiming and their side effects.
 ]=]
 
 function Igneous.GetRuntime(self: Weapon): Types.RuntimeState
@@ -577,7 +576,7 @@ end
 	Does not itself change any camera behavior — modpacks read Weapon._Runtime.IsAiming to react.
 ]=]
 
-function Igneous.SetAiming(self: Weapon, isAiming: boolean)
+function Igneous.SetAiming(self: Weapon, isAiming: boolean): ()
 	if self._Runtime.IsAiming == isAiming then
 		return
 	end
@@ -605,7 +604,7 @@ end
 	and OnFireEnd hooks accordingly. Only works when the weapon is equipped, not blocked by a reload, and has ammunition.
 ]=]
 
-function Igneous.SetFiring(self: Weapon, shouldFire: boolean)
+function Igneous.SetFiring(self: Weapon, shouldFire: boolean): ()
 	if not self._IsEquipped or self._IsFiring == shouldFire or self._ReloadFireLocked then
 		return
 	end
@@ -666,9 +665,8 @@ export type IgneousWeapon = typeof(setmetatable(
 		Reload: (self: Weapon) -> (),
 		CancelReload: (self: Weapon) -> (),
 		SetFiring: (self: Weapon, shouldFire: boolean) -> (),
-		SetLock: (self: Weapon, lock: Types.LockAxes?) -> (),
-		SetOffset: (self: Weapon, offset: vector?) -> (),
-		SetRecoil: (self: Weapon, recoil: Types.RecoilData) -> (),
+		SetRuntime: (self: Weapon, changes: { [string]: any }) -> (),
+		GetRuntime: (self: Weapon) -> Types.RuntimeState,
 		SetAiming: (self: Weapon, isAiming: boolean) -> (),
 	},
 	Igneous
