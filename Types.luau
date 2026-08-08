@@ -39,16 +39,20 @@ export type RecoilData = {
 }
 
 --[=[
-	@type RuntimeState { Lock: LockAxes?, Offset: vector?, IsAiming: boolean, Recoil: RecoilData }
+	@type RuntimeState { Lock: LockAxes?, Offset: vector?, IsAiming: boolean, Accuracy: number, MaxSpread: number, Range: number, Cooldown: number, Recoil: RecoilData }
 	@within Igneous
 	Mutable per-weapon state that modpacks can read and change at runtime via
-	SetLock, SetOffset, SetAiming, and SetRecoil, seeded from the weapon's Data on creation.
+	SetLock, SetOffset, SetAiming, and UpdateData, seeded from the weapon's Data on creation.
 ]=]
 
 export type RuntimeState = {
 	Lock: LockAxes?,
 	Offset: vector?,
 	IsAiming: boolean,
+	Accuracy: number,
+	MaxSpread: number,
+	Range: number,
+	Cooldown: number,
 	Recoil: RecoilData,
 }
 

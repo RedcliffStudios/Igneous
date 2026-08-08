@@ -23,6 +23,5 @@ exclude = [
 ]
 
 [dependencies]
-Spring = "sleitnick/spring@1.0.0"
 Trove = "sleitnick/trove@1.5.1"
 Motus = "notkaif/motus@1.1.0"

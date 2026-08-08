@@ -49,6 +49,14 @@ local RunService = game:GetService("RunService")
 
 local Camera = game.Workspace.CurrentCamera
 
+local RUNTIME_KEYS = {
+	Accuracy = true,
+	MaxSpread = true,
+	Range = true,
+	Cooldown = true,
+	Recoil = true,
+}
+
 if Modpacks then
 	for _, modpack in ipairs(Modpacks:GetChildren()) do
 		ModpackManager:RegisterModpack(modpack :: ModuleScript)
@@ -102,9 +110,13 @@ function Igneous.new(name: string, viewmodel: Model, data: ModuleScript): Igneou
 		_RaycastParams = RaycastParams.new(),
 		_Data = Data,
 		_Runtime = {
+			IsAiming = false,
 			Lock = Data.Lock,
 			Offset = Data.Offset,
-			IsAiming = false,
+			Accuracy = Data.Accuracy,
+			MaxSpread = Data.MaxSpread,
+			Range = Data.Range,
+			Cooldown = Data.Cooldown,
 			Recoil = Data.Recoil,
 		},
 		_LockedAngles = Vector3.new(0, 0, 0),
@@ -218,7 +230,7 @@ end
 
 function Igneous._GenerateSpread(self: Weapon)
 	local Theta = math.random() * 2 * math.pi
-	local Radius = math.tan(math.rad(self._Data.MaxSpread * (1 - self._Data.Accuracy))) * math.sqrt(math.random())
+	local Radius = math.tan(math.rad(self._Runtime.MaxSpread * (1 - self._Runtime.Accuracy))) * math.sqrt(math.random())
 
 	local X = Radius * math.cos(Theta)
 	local Y = Radius * math.sin(Theta)
@@ -402,7 +414,7 @@ function Igneous._Fire(self: Weapon, amount: number)
 		local Origin = Camera.CFrame.Position
 		local Direction = vector.normalize(
 			(vector.create(LookVector.X, LookVector.Y, LookVector.Z) + self:_GenerateSpread())
-		) * self._Data.Range
+		) * self._Runtime.Range
 		local RaycastResult = game.Workspace:Raycast(Origin, Direction, self._RaycastParams)
 		ModpackManager:TriggerHook(
 			"OnProjectileFire",
@@ -412,9 +424,23 @@ function Igneous._Fire(self: Weapon, amount: number)
 		)
 	end
 
-	task.wait(self._Data.Cooldown)
+	task.wait(self._Runtime.Cooldown)
 	self._CanFire = true
 	return
+end
+
+--[=[
+	@method SetLock
+	@within IgneousWeapon
+	@param lock LockAxes? -- Which axes to freeze relative to the camera, or nil to unlock
+
+	Freezes the viewmodel's rotation on the given axes, capturing the current camera
+	orientation as the locked angle. Pass nil to let the viewmodel rotate freely again.
+]=]
+
+function Igneous._SetLock(self: Weapon, lock: Types.LockAxes?)
+	self._Runtime.Lock = lock
+	self:_UpdateLockedAngles()
 end
 
 --[=[
@@ -497,41 +523,49 @@ function Igneous.CancelReload(self: Weapon)
 end
 
 --[=[
-	@method SetLock
+	@method SetRuntime
 	@within IgneousWeapon
-	@param lock LockAxes? -- Which axes to freeze relative to the camera, or nil to unlock
+	@param changes { [string]: any } -- Partial fields to overwrite
 
-	Freezes the viewmodel's rotation on the given axes, capturing the current camera
-	orientation as the locked angle. Pass nil to let the viewmodel rotate freely again.
+	Overwrites weapon stats. Accuracy, MaxSpread, Range, Cooldown, Recoil, Offset,
+	and Lock are runtime-mutable and are written to _Runtime
 ]=]
 
-function Igneous.SetLock(self: Weapon, lock: Types.LockAxes?)
-	self._Runtime.Lock = lock
-	self:_UpdateLockedAngles()
+function Igneous.SetRuntime(self: Weapon, changes: { [string]: any })
+	local NewData: Types.DataModule?
+
+	for Key, Value in changes do
+		if Key == "Lock" then
+			self:_SetLock(Value :: Types.LockAxes?)
+		elseif RUNTIME_KEYS[Key] then
+			(self._Runtime :: any)[Key] = Value
+		elseif Key == "MaxAmmo" then
+			self._Ammo.Max = Value :: number
+		elseif Key == "Reserve" then
+			self._Ammo.Reserve = Value :: number
+		else
+			NewData = NewData or table.clone(self._Data)
+		end
+	end
+
+	if NewData then
+		self._Data = NewData
+	end
 end
 
 --[=[
-	@method SetOffset
+	@method GetRuntime
 	@within IgneousWeapon
-	@param offset vector? -- Local-space offset applied to the viewmodel, or nil to clear it
+	@return RuntimeState
 
-	Sets the viewmodel's local-space offset from the camera. Useful for ADS positioning.
+	Returns a shallow copy of the weapon's current runtime state (Lock, Offset,
+	IsAiming, Accuracy, MaxSpread, Range, Cooldown, Recoil). A copy, not the live
+	table, so mutating the result can't bypass SetRuntime/SetLock/SetAiming and
+	their side effects.
 ]=]
 
-function Igneous.SetOffset(self: Weapon, offset: vector?)
-	self._Runtime.Offset = offset
-end
-
---[=[
-	@method SetRecoil
-	@within IgneousWeapon
-	@param recoil RecoilData
-
-	Sets the weapon's recoil magnitude. Useful for attachments that reduce or increase kick.
-]=]
-
-function Igneous.SetRecoil(self: Weapon, recoil: Types.RecoilData)
-	self._Runtime.Recoil = recoil
+function Igneous.GetRuntime(self: Weapon): Types.RuntimeState
+	return table.clone(self._Runtime)
 end
 
 --[=[
