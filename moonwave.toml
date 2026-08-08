@@ -6,7 +6,7 @@ changelog = false
 
 [[classOrder]]
 section = "Classes"
-classes = ["Igneous", "IgneousWeapon", "Modpack"]
+classes = ["Igneous", "IgneousWeapon", "Modpack", "ModpackManager"]
 collapsed = false
 
 [docusaurus]
@@ -16,7 +16,7 @@ favicon = "/short.png"
 
 [footer]
 style = "dark"
-copyright = "© 2025 Redcliff Studios. Built with Moonwave and Docusaurus."
+copyright = "© 2026 Redcliff Studios. Built with Moonwave and Docusaurus."
 
 [navbar]
 title = ""
@@ -44,7 +44,7 @@ description = "Extend weapon functionality without modifying core code through O
 
 [[home.features]]
 title = "Built-in Weapon Mechanics"
-description = "Includes firing modes (semi, auto, burst), recoil system with spring physics, spread/accuracy calculations, and ammo management out of the box."
+description = "Includes firing modes (semi, auto, burst), recoil data with accumulated camera hooks, spread/accuracy calculations, and Simple/Staged/Progressive reload types out of the box."
 
 [[home.features]]
 title = "Lightweight and Modular"
