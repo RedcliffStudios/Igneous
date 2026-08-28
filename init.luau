@@ -101,7 +101,7 @@ Igneous.__index = Igneous
 ]=]
 
 function Igneous.new(name: string, viewmodel: Model, data: ModuleScript): IgneousWeapon
-	local Data = require(data) :: Types.DataModule
+	local Data = require(data)() :: Types.DataModule
 
 	local self = setmetatable({
 		Name = name,
