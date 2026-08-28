@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[830],{4410:s=>{s.exports=JSON.parse('{"sourceUrl":"https://github.com/RedcliffStudios/Igneous/blob/master","baseUrl":"/Igneous/","classOrder":[{"section":"Classes","classes":["Igneous","IgneousWeapon","Modpack"],"collapsed":false}],"apiCategories":[]}')}}]);
