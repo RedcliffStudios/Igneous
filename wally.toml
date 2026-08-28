@@ -1,7 +1,7 @@
 [package]
 name = "notkaif/igneous"
 description = "Lightweight, modular FPS framework for Roblox providing core weapon mechanics with a hook-based modpack system"
-version = "3.0.0"
+version = "3.0.1"
 license = "MIT"
 authors = ["Kaif"]
 registry = "https://github.com/UpliftGames/wally-index"
