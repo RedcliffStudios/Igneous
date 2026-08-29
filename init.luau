@@ -194,7 +194,7 @@ end
 --[=[
 	@method Equip
 	@within IgneousWeapon
-	
+
 	Equips the weapon, making it visible and triggering the OnEquip hook for all registered modpacks.
 	The viewmodel is parented to Workspace and becomes active.
 ]=]
@@ -210,7 +210,7 @@ end
 --[=[
 	@method Unequip
 	@within IgneousWeapon
-	
+
 	Unequips the weapon, hiding it and triggering the OnUnequip hook for all registered modpacks.
 	The viewmodel is parented back to ReplicatedStorage and becomes inactive.
 ]=]
@@ -406,6 +406,7 @@ function Igneous._Fire(self: Weapon, amount: number): ()
 	self._CanFire = false
 	self._Ammo.Amount -= 1
 
+	ModpackManager:TriggerHook("OnAmmoChange", self, self._Ammo.Amount + 1, self._Ammo.Amount, "fired")
 	ModpackManager:TriggerHook("OnFire", self)
 
 	for _ = 1, amount do
@@ -598,7 +599,7 @@ end
 	@method SetFiring
 	@within IgneousWeapon
 	@param shouldFire boolean -- Whether the weapon should start or stop firing
-	
+
 	Controls the weapon's firing state. When set to true, begins firing based on the weapon's firemode (Semi, Burst, or Auto).
 	When set to false, stops firing (Auto only — Semi/Burst always complete their sequence). Triggers OnFireStart
 	and OnFireEnd hooks accordingly. Only works when the weapon is equipped, not blocked by a reload, and has ammunition.
