@@ -607,7 +607,11 @@ end
 ]=]
 
 function Igneous.SetFiring(self: Weapon, shouldFire: boolean): ()
-	if not self._IsEquipped or self._IsFiring == shouldFire or self._ReloadFireLocked then
+	if not self._IsEquipped or self._IsFiring == shouldFire then
+		return
+	end
+
+	if shouldFire and self._ReloadFireLocked then
 		return
 	end
 
@@ -644,6 +648,7 @@ function Igneous.SetFiring(self: Weapon, shouldFire: boolean): ()
 		if self._Data.Firemode == "Auto" and self._FireThread then
 			task.cancel(self._FireThread)
 			self._FireThread = nil
+			self._CanFire = true
 		end
 	end
 end
