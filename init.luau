@@ -102,12 +102,13 @@ Igneous.__index = Igneous
 
 function Igneous.new(name: string, viewmodel: Model, data: ModuleScript): IgneousWeapon
 	local Data = require(data)() :: Types.DataModule
+	local ViewmodelClone = viewmodel:Clone()
 
 	local self = setmetatable({
 		Name = name,
-		Viewmodel = viewmodel:Clone(),
+		Viewmodel = ViewmodelClone,
 
-		Animator = Motus.new(viewmodel),
+		Animator = Motus.new(ViewmodelClone),
 		_Cleanup = Trove.new(),
 		_RaycastParams = RaycastParams.new(),
 		_Data = Data,
